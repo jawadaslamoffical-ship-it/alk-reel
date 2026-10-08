@@ -1,0 +1,23 @@
+{
+  "brand": "Al Khaleej Al Thahabi",
+  "brandLines": ["AL KHALEEJ", "AL THAHABI"],
+  "tagline": "COMPUTER PARTS & LAPTOPS",
+  "location": "Sharjah, UAE",
+  "address": "Shop #4, Al Jodhi Bldg, Industrial Area 5",
+  "whatsapp": "+971 56 256 3696",
+  "website": "alkhaleejalthahabi.com",
+  "accent": "#F5B700",
+  "music": "brand/music.wav",
+  "badge": "IN STOCK",
+  "checks": ["Tested", "In Stock", "Best Price"],
+  "features": ["Tested & Working", "Ready Stock", "Best Wholesale Prices", "Wholesale & Retail"],
+  "features_vo": "Every item is tested and ready in stock, at the best wholesale prices.",
+  "features_caption": "Tested, ready in stock, best wholesale prices.",
+  "end_vo": "Al Khaleej Al Thahabi. Industrial Area five, Sharjah. Message us on WhatsApp, or visit our website today.",
+  "strap": "IN STOCK NOW",
+  "say_as": {
+    "Al Khaleej Al Thahabi": "[[ ˈæl kəlˈiːdʒ ˈæl ðəhˈɑːbi ]]",
+    "UAE": "U A E",
+    "AED": "dirhams"
+  }
+}

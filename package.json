@@ -1,0 +1,19 @@
+{
+  "name": "alk-reel",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Al Khaleej Al Thahabi product reel renderer (Remotion)",
+  "scripts": {
+    "render": "remotion render src/index.tsx Reel out/reel.mp4 --props=out/props.json --codec=h264 --crf=20"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.500",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.500"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "typescript": "5.6.3"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "sample-gpu",
+  "headline": ["GRAPHICS", "CARDS"],
+  "intro_vo": "Looking for a graphics card in the UAE?",
+  "strap": "GRAPHICS CARDS IN STOCK NOW",
+  "products": [
+    {"image": "sample_photos/gt710.jpg", "title": "GT 710 2GB", "tag": "Budget • Silent",
+     "caption": "Silent, budget-friendly, perfect for everyday use.",
+     "vo": "The G T seven ten. Silent, budget friendly, and perfect for everyday use."},
+    {"image": "sample_photos/quadro.jpg", "title": "NVIDIA Quadro", "tag": "Pro Design • Rendering",
+     "caption": "Serious power for design, rendering & professional work.",
+     "vo": "The NVIDIA Quadro, serious power for design, rendering, and professional work."},
+    {"image": "sample_photos/nitro.jpg", "title": "Sapphire Nitro", "tag": "Gaming",
+     "caption": "Made for gaming.", "vo": "And Sapphire Nitro, made for gaming."}
+  ],
+  "post": {"caption": "Graphics cards in stock in Sharjah"}
+}
