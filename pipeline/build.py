@@ -55,10 +55,51 @@ def fetch_image(src, dest, job_dir):
     os.remove(raw)
 
 
+ONES = "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split()
+TENS = "_ _ twenty thirty forty fifty sixty seventy eighty ninety".split()
+
+
+def two(n):
+    if n < 20:
+        return ONES[n]
+    return TENS[n // 10] + ("" if n % 10 == 0 else " " + ONES[n % 10])
+
+
+def num_words(n):
+    """2133 -> twenty one thirty three, 2400 -> twenty four hundred, 512 -> five twelve"""
+    if n < 100:
+        return two(n)
+    if n < 1000:
+        return ONES[n // 100] + (" hundred" if n % 100 == 0 else " " + ("oh " + ONES[n % 100] if n % 100 < 10 else two(n % 100)))
+    if n < 10000:
+        hi, lo = divmod(n, 100)
+        if lo == 0:
+            return two(hi) + " hundred" if hi % 10 else two(hi // 10) + " thousand"
+        return two(hi) + " " + ("oh " + ONES[lo] if lo < 10 else two(lo))
+    return str(n)
+
+
+def letters(s):
+    return " ".join(s.upper())
+
+
+def tech_speech(t):
+    t = re.sub(r"(\d+)\s*(GB|gb|Gb)\b", lambda m: num_words(int(m.group(1))) + " G B", t)
+    t = re.sub(r"(\d+)\s*(TB|tb)\b", lambda m: num_words(int(m.group(1))) + " T B", t)
+    t = re.sub(r"(\d+)\s*(MHz|mhz|Mhz)\b", lambda m: num_words(int(m.group(1))) + " megahertz", t)
+    t = re.sub(r"(\d+)\s*(GHz|ghz)\b", lambda m: m.group(1).replace(".", " point ") + " gigahertz", t)
+    t = re.sub(r"\b(DDR|PC|LPDDR)(\d)\b", lambda m: letters(m.group(1)) + " " + ONES[int(m.group(2))], t, flags=re.I)
+    t = re.sub(r"\b(SSD|HDD|GPU|CPU|RAM|NVMe|M\.2|USB|HDMI|RTX|GTX|GT|AMD|HP|PC)\b",
+               lambda m: {"RAM": "ram", "NVMe": "N V M E", "M.2": "M two"}.get(m.group(1), letters(m.group(1))), t)
+    t = re.sub(r"\b([iI])([3579])\b", lambda m: "i " + ONES[int(m.group(2))], t)
+    t = re.sub(r"\b(\d{3,4})\b", lambda m: num_words(int(m.group(1))), t)
+    return t
+
+
 def speech_text(text, say_as):
     for k, v in say_as.items():
         text = re.sub(re.escape(k), v, text, flags=re.I)
-    return text
+    return tech_speech(text)
 
 
 def wav_len(path):
