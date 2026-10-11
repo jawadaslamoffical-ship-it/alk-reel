@@ -85,6 +85,8 @@ def letters(s):
 
 def tech_speech(t):
     t = re.sub(r"(\d+)\s*(GB|gb|Gb)\b", lambda m: num_words(int(m.group(1))) + " G B", t)
+    t = re.sub(r"\bgigs?\b", "G B", t, flags=re.I)
+    t = re.sub(r"\bgigabytes?\b", "G B", t, flags=re.I)
     t = re.sub(r"(\d+)\s*(TB|tb)\b", lambda m: num_words(int(m.group(1))) + " T B", t)
     t = re.sub(r"(\d+)\s*(MHz|mhz|Mhz)\b", lambda m: num_words(int(m.group(1))) + " megahertz", t)
     t = re.sub(r"(\d+)\s*(GHz|ghz)\b", lambda m: m.group(1).replace(".", " point ") + " gigahertz", t)
@@ -204,3 +206,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+  
