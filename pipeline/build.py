@@ -140,6 +140,19 @@ def main():
     log("render ...")
     subprocess.run(cmd, cwd=ROOT, check=True)
 
+    # 6. WhatsApp 16 MB se badi video nahi leta -> zarurat ho to chhota karo (max ~14 MB)
+    limit = 14 * 1024 * 1024
+    size = os.path.getsize(out_mp4)
+    if size > limit:
+        kbps = int((limit * 8 / 1024) / total * 0.92) - 128   # audio 128k
+        log(f"size {size/1e6:.1f} MB -> compress to ~{kbps} kbps")
+        tmp = out_mp4 + ".tmp.mp4"
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", out_mp4, "-c:v", "libx264", "-preset", "medium",
+                        "-b:v", f"{kbps}k", "-maxrate", f"{int(kbps*1.3)}k", "-bufsize", f"{kbps*2}k",
+                        "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", tmp], check=True)
+        os.replace(tmp, out_mp4)
+        log(f"new size {os.path.getsize(out_mp4)/1e6:.1f} MB")
+
     result = {"id": jid, "file": out_mp4, "duration": round(total, 2),
               "products": [p["title"] for p in products],
               "post": job.get("post", {})}
