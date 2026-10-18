@@ -83,7 +83,7 @@ jobs:
           jq --arg url "${{ steps.pub.outputs.url }}" \
              --arg run "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
              '. + {status:"done", video_url:$url, run_url:$run} | del(.file)' out/result.json > cb.json
-          curl -sS -X POST "$CALLBACK" -H "Content-Type: application/json" --data @cb.json
+          curl -sS --fail --retry 10 --retry-all-errors --retry-delay 30 --connect-timeout 20 --max-time 90 -X POST "$CALLBACK" -H "Content-Type: application/json" --data @cb.json
 
       - name: Tell n8n (failed)
         if: failure()
@@ -92,7 +92,7 @@ jobs:
         run: |
           [ -z "$CALLBACK" ] && exit 0
           ID=$(echo "$JOB" | jq -r '.id // "reel"' 2>/dev/null || echo reel)
-          curl -sS -X POST "$CALLBACK" -H "Content-Type: application/json" \
+          curl -sS --fail --retry 10 --retry-all-errors --retry-delay 30 --connect-timeout 20 --max-time 90 -X POST "$CALLBACK" -H "Content-Type: application/json" \
             -d "{\"status\":\"failed\",\"id\":\"$ID\",\"run_url\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
 
       - name: Purani videos saaf karo (sirf latest 90 rakho)
