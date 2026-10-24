@@ -8,7 +8,8 @@ Usage:
   python3 pipeline/build.py --json '{"products":[...]}'  # seedha JSON string (GitHub Actions)
 
 Env (optional):
-  PIPER_VOICE          default: voices/en-us-ryan-high.onnx
+  TTS_VOICE            Microsoft Neural voice (default en-US-AndrewMultilingualNeural), 'piper' = purani awaz
+  PIPER_VOICE          backup: voices/en-us-ryan-high.onnx
   BROWSER_EXECUTABLE   Chrome headless shell ka path (agar Remotion ka apna download nahi chahiye)
   CONCURRENCY          Remotion render threads
 """
@@ -144,21 +145,52 @@ def main():
         scenes.append({"kind": "features", "say": cfg["features_vo"], "caption": cfg["features_caption"]})
     scenes.append({"kind": "end", "say": cfg["end_vo"], "caption": ""})
 
-    # 3. Voices (Piper)
-    from piper import PiperVoice
-    from piper.config import SynthesisConfig
-    voice_path = os.environ.get("PIPER_VOICE", os.path.join(ROOT, "voices", "en-us-ryan-high.onnx"))
-    voice = PiperVoice.load(voice_path)
-    syn = SynthesisConfig(length_scale=float(cfg.get("speed", 0.92)))
+    # 3. Voices: Microsoft Neural (Edge TTS), fail ho to Piper backup
+    tts_voice = os.environ.get("TTS_VOICE") or cfg.get("tts_voice") or "en-US-AndrewMultilingualNeural"
+    speed = float(cfg.get("speed", 0.92))
+    piper_voice = {}
+
+    def piper_say(text, path):
+        if "v" not in piper_voice:
+            from piper import PiperVoice
+            from piper.config import SynthesisConfig
+            vp = os.environ.get("PIPER_VOICE", os.path.join(ROOT, "voices", "en-us-ryan-high.onnx"))
+            piper_voice["v"] = PiperVoice.load(vp)
+            piper_voice["c"] = SynthesisConfig(length_scale=speed)
+        with wave.open(path, "wb") as w:
+            piper_voice["v"].synthesize_wav(text, w, syn_config=piper_voice["c"])
+
+    def edge_say(text, path):
+        import asyncio, edge_tts
+        rate = f"{round((1 / speed - 1) * 100):+d}%"
+        mp3 = path[:-4] + ".mp3"
+        for attempt in range(3):
+            try:
+                asyncio.run(edge_tts.Communicate(text, tts_voice, rate=rate).save(mp3))
+                if os.path.getsize(mp3) > 1000:
+                    break
+            except Exception as e:
+                log("edge-tts retry", attempt + 1, e)
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", mp3, "-ar", "44100", "-ac", "1", path], check=True)
+        os.remove(mp3)
+
+    use_edge = tts_voice.lower() != "piper"
     for i, s in enumerate(scenes):
         vo = f"{rel}/vo{i}.wav"
         path = os.path.join(PUBLIC, vo)
-        with wave.open(path, "wb") as w:
-            voice.synthesize_wav(speech_text(s.pop("say"), cfg.get("say_as", {})), w, syn_config=syn)
+        text = speech_text(s.pop("say"), cfg.get("say_as", {}))
+        if use_edge:
+            try:
+                edge_say(text, path)
+            except Exception as e:
+                log("Edge voice fail, Piper backup:", e)
+                use_edge = False
+        if not use_edge:
+            piper_say(text, path)
         length = wav_len(path)
         s["vo"] = vo
         s["dur"] = round(length + VO_DELAY + (END_GAP if s["kind"] == "end" else GAP), 2)
-        log(f"vo{i} {s['kind']:8s} {length:5.2f}s -> scene {s['dur']}s")
+        log(f"vo{i} {s['kind']:8s} {length:5.2f}s -> scene {s['dur']}s  ({tts_voice if use_edge else 'piper'})")
 
     # 4. props.json
     keys = ["brand", "brandLines", "tagline", "location", "address", "whatsapp", "website", "accent",
