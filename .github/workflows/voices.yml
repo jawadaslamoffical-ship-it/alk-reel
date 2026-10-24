@@ -25,7 +25,9 @@ jobs:
           for v in en-US-AndrewMultilingualNeural en-US-BrianMultilingualNeural en-GB-RyanNeural en-US-ChristopherNeural en-US-AvaMultilingualNeural en-US-EmmaMultilingualNeural en-GB-SoniaNeural en-IN-PrabhatNeural; do
             edge-tts --voice "$v" --rate=+8% --text "$TEXT" --write-media "${n}-${v}.mp3" && echo "ok $v" || echo "FAIL $v"
             n=$((n+1))
+            sleep 2
           done
+          find . -size -2k -print -delete
           ls -la
       - name: Release mein daalo
         env:
