@@ -1,0 +1,35 @@
+name: Voice Samples
+
+# Alag alag Microsoft Neural voices ke chhote samples banata hai (release: voice-samples)
+on:
+  workflow_dispatch:
+  push:
+    paths: [".github/workflows/voices.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  samples:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Samples banao
+        run: |
+          pip install -q edge-tts
+          TEXT="New stock just arrived in the UAE. Eight gig D D R four laptop RAM, twenty four hundred megahertz. Tested and ready in stock. WhatsApp us now, Al Khaleej Al Thahabi, Sharjah."
+          mkdir s && cd s
+          n=1
+          for v in en-US-AndrewMultilingualNeural en-US-BrianMultilingualNeural en-GB-RyanNeural en-US-ChristopherNeural en-US-AvaMultilingualNeural en-US-EmmaMultilingualNeural en-GB-SoniaNeural en-IN-PrabhatNeural; do
+            edge-tts --voice "$v" --rate=+8% --text "$TEXT" --write-media "${n}-${v}.mp3" && echo "ok $v" || echo "FAIL $v"
+            n=$((n+1))
+          done
+          ls -la
+      - name: Release mein daalo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete voice-samples --yes --cleanup-tag -R "$GITHUB_REPOSITORY" || true
+          gh release create voice-samples s/*.mp3 -R "$GITHUB_REPOSITORY" --title "Voice samples" --notes "Reel voice samples"
