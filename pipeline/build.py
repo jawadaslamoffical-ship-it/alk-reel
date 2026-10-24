@@ -8,7 +8,7 @@ Usage:
   python3 pipeline/build.py --json '{"products":[...]}'  # seedha JSON string (GitHub Actions)
 
 Env (optional):
-  TTS_VOICE            Microsoft Neural voice (default en-US-AndrewMultilingualNeural), 'piper' = purani awaz
+  TTS_VOICE            Microsoft Neural voice (default en-US-ChristopherNeural), 'piper' = purani awaz
   PIPER_VOICE          backup: voices/en-us-ryan-high.onnx
   BROWSER_EXECUTABLE   Chrome headless shell ka path (agar Remotion ka apna download nahi chahiye)
   CONCURRENCY          Remotion render threads
@@ -146,7 +146,7 @@ def main():
     scenes.append({"kind": "end", "say": cfg["end_vo"], "caption": ""})
 
     # 3. Voices: Microsoft Neural (Edge TTS), fail ho to Piper backup
-    tts_voice = os.environ.get("TTS_VOICE") or cfg.get("tts_voice") or "en-US-AndrewMultilingualNeural"
+    tts_voice = os.environ.get("TTS_VOICE") or cfg.get("tts_voice") or "en-US-ChristopherNeural"
     speed = float(cfg.get("speed", 0.92))
     piper_voice = {}
 
