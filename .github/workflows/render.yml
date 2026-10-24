@@ -54,7 +54,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq fonts-inter fonts-noto-color-emoji ffmpeg jq > /dev/null
-          pip install -q piper-tts==1.8.0
+          pip install -q piper-tts==1.8.0 edge-tts
           npm ci --no-audit --no-fund
           npx remotion browser ensure
 
