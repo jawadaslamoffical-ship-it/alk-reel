@@ -19,14 +19,19 @@ jobs:
       - name: Samples banao
         run: |
           pip install -q edge-tts
-          TEXT="New stock just arrived in the UAE. Eight gig D D R four laptop RAM, twenty four hundred megahertz. Tested and ready in stock. WhatsApp us now, Al Khaleej Al Thahabi, Sharjah."
+          V=en-US-ChristopherNeural
           mkdir s && cd s
           n=1
-          for v in en-US-AndrewMultilingualNeural en-US-BrianMultilingualNeural en-GB-RyanNeural en-US-ChristopherNeural en-US-AvaMultilingualNeural en-US-EmmaMultilingualNeural en-GB-SoniaNeural en-IN-PrabhatNeural; do
-            edge-tts --voice "$v" --rate=+8% --text "$TEXT" --write-media "${n}-${v}.mp3" && echo "ok $v" || echo "FAIL $v"
-            n=$((n+1))
-            sleep 2
-          done
+          while IFS= read -r NAME; do
+            edge-tts --voice "$V" --rate=+8% --text "${NAME}. Industrial Area five, Sharjah." --write-media "name-${n}.mp3" && echo "ok $n $NAME" || echo "FAIL $n"
+            n=$((n+1)); sleep 2
+          done <<'EOF'
+          Al Khaleej Al Thahabi
+          Al Khaleej Al Zahabi
+          Al Khaleej Al Dhahabi
+          Al Kha-leej Al Tha-habi
+          Al-Khaleej Al-Thahabee
+          EOF
           find . -size -2k -print -delete
           ls -la
       - name: Release mein daalo
