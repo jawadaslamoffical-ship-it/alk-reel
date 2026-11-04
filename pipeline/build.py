@@ -41,18 +41,29 @@ def safe_id(s):
     return re.sub(r"[^A-Za-z0-9_-]+", "-", str(s)).strip("-")[:60] or "reel"
 
 
-def fetch_image(src, dest, job_dir):
-    """URL ya local path -> 1200px JPG"""
+def fetch_image(src, dest, job_dir, label=""):
+    """URL ya local path -> 1200px JPG (label ho to neeche kone mein chhota likh do)"""
     raw = dest + ".src"
     if re.match(r"^https?://", src):
-        req = urllib.request.Request(src, headers={"User-Agent": "Mozilla/5.0 alk-reel"})
+        req = urllib.request.Request(src, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+            "Accept": "image/avif,image/webp,image/*,*/*;q=0.8"})
         with urllib.request.urlopen(req, timeout=60) as r, open(raw, "wb") as f:
             shutil.copyfileobj(r, f)
     else:
         p = src if os.path.isabs(src) else os.path.join(job_dir, src)
         shutil.copy(p, raw)
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", raw, "-frames:v", "1",
-                    "-vf", "scale='min(1200,iw)':-2", "-q:v", "3", dest], check=True)
+    vf = "scale='min(1200,iw)':-2"
+    if label:
+        vf += (",drawtext=font='Inter':text='" + label.replace("'", "") + "':fontcolor=white:fontsize=h*0.035"
+               ":box=1:boxcolor=black@0.45:boxborderw=10:x=w-tw-24:y=h-th-24")
+    try:
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", raw, "-frames:v", "1", "-vf", vf, "-q:v", "3", dest], check=True)
+    except subprocess.CalledProcessError:
+        if not label:
+            raise
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", raw, "-frames:v", "1",
+                        "-vf", "scale='min(1200,iw)':-2", "-q:v", "3", dest], check=True)
     os.remove(raw)
 
 
@@ -128,12 +139,23 @@ def main():
     os.makedirs(OUT, exist_ok=True)
 
     # 1. Photos
-    images = []
+    images, ok_products = [], []
+    label = str(job.get("rep_label") or "")
     for i, p in enumerate(products):
         name = f"{rel}/p{i}.jpg"
         log("photo", i, p["image"][:80])
-        fetch_image(p["image"], os.path.join(PUBLIC, name), job_dir)
+        try:
+            fetch_image(p["image"], os.path.join(PUBLIC, name), job_dir, label)
+        except Exception as e:
+            if not label:
+                raise
+            log("photo skip (download fail):", e)
+            continue
         images.append(name)
+        ok_products.append(p)
+    if not ok_products:
+        raise SystemExit("koi photo download nahi hui")
+    products = ok_products
 
     # 2. Script (scene list)
     scenes = [{"kind": "intro", "say": cfg.get("intro_vo") or "New stock just arrived in the U A E.",
