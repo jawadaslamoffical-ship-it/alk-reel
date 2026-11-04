@@ -67,6 +67,44 @@ def fetch_image(src, dest, job_dir, label=""):
     os.remove(raw)
 
 
+def compose_images(srcs, dest, job_dir, label=""):
+    """Kai photos ko white background par ek grid mein jodo (2 = side by side, 3-4 = 2x2, 5-6 = 3x2)"""
+    tmp = []
+    for k, src in enumerate(srcs):
+        t = f"{dest}.part{k}.jpg"
+        try:
+            fetch_image(src, t, job_dir)
+            tmp.append(t)
+        except Exception as e:
+            log("compose part skip:", e)
+    if not tmp:
+        raise RuntimeError("compose: koi photo nahi")
+    n = len(tmp)
+    cols = 2 if n <= 4 else 3
+    rows = (n + cols - 1) // cols
+    cell = 560
+    args, f = ["ffmpeg", "-v", "error", "-y"], []
+    for k, t in enumerate(tmp):
+        args += ["-i", t]
+        f.append(f"[{k}:v]scale={cell-30}:{cell-30}:force_original_aspect_ratio=decrease,pad={cell}:{cell}:(ow-iw)/2:(oh-ih)/2:white,setsar=1[c{k}]")
+    for k in range(n, rows * cols):
+        args += ["-f", "lavfi", "-i", f"color=white:s={cell}x{cell}"]
+        f.append(f"[{k}:v]setsar=1[c{k}]")
+    if rows * cols == 1:
+        layout = "0_0"
+    layout = "|".join(f"{(k % cols) * cell}_{(k // cols) * cell}" for k in range(rows * cols))
+    f.append("".join(f"[c{k}]" for k in range(rows * cols)) + f"xstack=inputs={rows * cols}:layout={layout}:fill=white[g]")
+    out = "[g]"
+    if label:
+        f.append("[g]drawtext=font='Inter':text='" + label.replace("'", "") + "':fontcolor=white:fontsize=h*0.035"
+                 ":box=1:boxcolor=black@0.45:boxborderw=10:x=w-tw-24:y=h-th-24[o]")
+        out = "[o]"
+    args += ["-filter_complex", ";".join(f), "-map", out, "-frames:v", "1", "-q:v", "3", dest]
+    subprocess.run(args, check=True)
+    for t in tmp:
+        os.remove(t)
+
+
 ONES = "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split()
 TENS = "_ _ twenty thirty forty fifty sixty seventy eighty ninety".split()
 
@@ -145,7 +183,10 @@ def main():
         name = f"{rel}/p{i}.jpg"
         log("photo", i, p["image"][:80])
         try:
-            fetch_image(p["image"], os.path.join(PUBLIC, name), job_dir, label)
+            if isinstance(p.get("images"), list) and len(p["images"]) > 1:
+                compose_images(p["images"], os.path.join(PUBLIC, name), job_dir, label)
+            else:
+                fetch_image(p["image"], os.path.join(PUBLIC, name), job_dir, label)
         except Exception as e:
             if not label:
                 raise
